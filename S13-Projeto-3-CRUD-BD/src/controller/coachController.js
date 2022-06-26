@@ -107,13 +107,30 @@ const findCoachById = async (req, res) => {
 }
     
 const updateCoach = async (req, res) => {
+
   try {
+    const authHeader = req.get('authorization')
+
+    if (!authHeader) {
+      return res.status(401).send('Necessita authorization')
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    await jwt.verify(token, SECRET, async function (error) {
+      if (error) {
+        return res.status(403).send('Não vai rolar')
+      }
+
     const { name, age, region, team, gender } = req.body
     const updatedCoach = await CoachModel
     .findByIdAndUpdate(req.params.id, {
       name, age, region, team, gender
     })
+
     res.status(200).json(updatedCoach)
+  })
+
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: error.message })
