@@ -138,15 +138,32 @@ const updateCoach = async (req, res) => {
 }
 
 const deleteCoach = async (req, res) => {
-   try {
-       const { id } = req.params
-       await CoachModel.findByIdAndDelete(id)
-       const message = `O treinador com o ${id} foi deletado com sucesso!`
+
+  try {
+
+    const authHeader = req.get('authorization')
+
+    if (!authHeader) {
+      return res.status(401).send('Necessita authorization')
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    await jwt.verify(token, SECRET, async function (error) {
+
+      if (error) {
+        return res.status(403).send('Não vai rolar')
+      }
+
+      const { id } = req.params
+      await CoachModel.findByIdAndDelete(id)
+      const message = `O treinador com o id: ${id} foi deletado com sucesso!`
       res.status(200).json({ message })
-   } catch (error) {
-     console.error(error)
-     res.status(500).json({ message: error.message })
-   }
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: error.message })
+  }
 }
 
 module.exports =  {
