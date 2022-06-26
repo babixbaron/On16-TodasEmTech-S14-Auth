@@ -13,6 +13,9 @@
  * const team = req.body.team
  */
 const CoachModel = require('../models/coachModel')
+const jwt = require('jsonwebtoken')
+const SECRET = process.env.SECRET
+
 const createCoach = async (req, res) => {
    try {
       const { name, team, region, age, gender } = req.body
@@ -32,9 +35,25 @@ const createCoach = async (req, res) => {
 
 const findAllCoaches = async (req, res) => {
   try {
-    const allCoaches = await CoachModel.find()
-    res.status(200).json(allCoaches)
-  } catch(error) {
+
+    const authHeader = req.get('authorization')
+
+    if (!authHeader) {
+      return res.status(401).send('Cadê o authorization?')
+    }
+
+    const token = authHeader.split(' ')[1] // devolve apenas o token
+
+    await jwt.verify(token, SECRET, async function (error) {
+      if (error) {
+        return res.status(403).send('Não vai rolar')
+      }
+      const allCoaches = await CoachModel.find()
+      res.status(200).json(allCoaches)
+    })
+
+  } catch (error) {
+
     console.error(error)
     res.status(500).json({ message: error.message})
   }
