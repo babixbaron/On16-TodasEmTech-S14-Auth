@@ -34,7 +34,7 @@ const createCoach = async (req, res) => {
       if (error) {
         return res.status(403).send('Não vai rolar')
       }
-      
+
       const { name, team, region, age, gender } = req.body
 
       const newCoach = new CoachModel({
@@ -80,15 +80,32 @@ const findAllCoaches = async (req, res) => {
 }
 
 const findCoachById = async (req, res) => {
-   try {
-     const findCoach = await CoachModel.findById(req.params.id)
-     res.status(200).json(findCoach)
-   } catch (error) {
-     console.error(error)
-     res.status(500).json({ message: error.message })
-   }
-}
 
+  try {
+    const authHeader = req.get('authorization')
+
+    if (!authHeader) {
+      return res.status(401).send('Necessita authorization')
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    await jwt.verify(token, SECRET, async function (error) {
+      if (error) {
+        return res.status(403).send('Não vai rolar')
+      }
+
+      const findCoach = await CoachModel.findById(req.params.id)
+      res.status(200).json(findCoach)
+    })
+
+  } catch (error) {
+
+    console.error(error)
+    res.status(500).json({ message: error.message })
+  }
+}
+    
 const updateCoach = async (req, res) => {
   try {
     const { name, age, region, team, gender } = req.body
