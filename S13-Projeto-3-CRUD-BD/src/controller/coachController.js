@@ -17,7 +17,24 @@ const jwt = require('jsonwebtoken')
 const SECRET = process.env.SECRET
 
 const createCoach = async (req, res) => {
-   try {
+
+  try {
+
+    const authHeader = req.get('authorization')
+
+    if (!authHeader) {
+
+      return res.status(401).send('Cadê o authorization?')
+    }
+
+    const token = authHeader.split(' ')[1]
+
+    await jwt.verify(token, SECRET, async function (error) {
+
+      if (error) {
+        return res.status(403).send('Não vai rolar')
+      }
+      
       const { name, team, region, age, gender } = req.body
 
       const newCoach = new CoachModel({
@@ -27,10 +44,13 @@ const createCoach = async (req, res) => {
       const savedCoach = await newCoach.save()
 
       res.status(201).json(savedCoach)
-   } catch (error) {
-     console.error(error)
-     res.status(500).json({ message: error.message })
-   }
+
+    })
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: error.message })
+  }
 }
 
 const findAllCoaches = async (req, res) => {
